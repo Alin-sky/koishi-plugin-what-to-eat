@@ -12,7 +12,7 @@ export interface Config {
 }
 
 export const Config: Schema<Config> = Schema.object({
-  betaConfig: Schema.boolean().default(false),ls -la ~/.ssh/
+  betaConfig: Schema.boolean().default(false),
   text: Schema.array(String).default([]),
 })
 
