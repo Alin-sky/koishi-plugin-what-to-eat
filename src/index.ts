@@ -65,8 +65,7 @@ export function apply(ctx: Context, config: Config) {
     logger.warn('数据文件加载失败，请将 food.json 和 drink.json 放到 data/what-to-eat/ 目录下')
   }
 
-  const sendMarkdown = async (session: Session, message: string,buttt1: string,buttt2: string) => {
-    const channelId = session.channelId
+  const sendMarkdown = async (session: Session, message: string,button1: string,button2: string) => {
     let appended = message
     if (config.betaConfig) {
       const openid = session.isDirect ? session.userId : session.guildId
@@ -82,8 +81,8 @@ export function apply(ctx: Context, config: Config) {
           rows: [
             {
               buttons: [
-                { render_data: { label: buttt1, style: 1 }, action: { type: 2, permission: { type: 2 }, data: '/今天吃什么' } },
-                { render_data: { label: buttt2, style: 1 }, action: { type: 2, permission: { type: 2 }, data: '/今天喝什么' } },
+                { render_data: { label: button1, style: 1 }, action: { type: 2, permission: { type: 2 }, data: '/今天吃什么' } },
+                { render_data: { label: button2, style: 1 }, action: { type: 2, permission: { type: 2 }, data: '/今天喝什么' } },
               ],
             },
             {
@@ -97,7 +96,7 @@ export function apply(ctx: Context, config: Config) {
     }
 
     const bot = session.bot as any
-    send_md_mess(session, payload)
+    await send_md_mess(session, payload)
   }
 
   ctx.command('eat', '今天吃什么')
