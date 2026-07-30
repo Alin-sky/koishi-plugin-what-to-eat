@@ -1,5 +1,4 @@
 import { Context, Schema, Session } from 'koishi'
-import { } from "@satorijs/adapter-qq";
 import { } from '@koishijs/plugin-http'
 import * as fs from 'fs'
 import * as path from 'path'
@@ -17,39 +16,6 @@ export const Config: Schema<Config> = Schema.object({
   text: Schema.array(String).default([]),
 })
 
-type md_format = {
-  msg_id?: string
-  event_id?: string
-  msg_type: number
-  markdown: {
-    content: any
-  }
-}
-/**
- * 发送 Markdown 格式消息
- *
- * 根据会话平台（QQ 或 QQGuild）自动选择正确的消息发送方式，将 Markdown 格式的消息发送给用户。
- *
- * @param session - Koishi 会话对象，包含事件和平台信息
- * @param md - Markdown 消息格式对象，包含消息内容和元数据
- */
-export async function send_md_mess(session, md: md_format) {
-  try {
-    if (session.event.platform == 'qq') {
-      if (session.event.guild) {
-        await session.qq.sendMessage(session.channelId, md)
-      } else {
-        await session.qq.sendPrivateMessage(session.event.user.id, md)
-      }
-    } else if (session.event.platform == 'qqguild') {
-      await session.qqguild.sendMessage(session.event.channel.id, md)
-    }
-  } catch (e) {
-    console.log(e)
-  }
-}
-
-
 export function apply(ctx: Context, config: Config) {
   const logger = ctx.logger('what-to-eat')
 
@@ -65,7 +31,7 @@ export function apply(ctx: Context, config: Config) {
     logger.warn('数据文件加载失败，请将 food.json 和 drink.json 放到 data/what-to-eat/ 目录下')
   }
 
-  const sendMarkdown = async (session: Session, message: string,buttt1: string,buttt2: string) => {
+  const sendMarkdown = async (session: Session, message: string) => {
     const channelId = session.channelId
     let appended = message
     if (config.betaConfig) {
@@ -82,8 +48,8 @@ export function apply(ctx: Context, config: Config) {
           rows: [
             {
               buttons: [
-                { render_data: { label: buttt1, style: 1 }, action: { type: 2, permission: { type: 2 }, data: '/今天吃什么' } },
-                { render_data: { label: buttt2, style: 1 }, action: { type: 2, permission: { type: 2 }, data: '/今天喝什么' } },
+                { render_data: { label: '🍕今天吃什么', style: 1 }, action: { type: 2, permission: { type: 2 }, data: '/今天吃什么' } },
+                { render_data: { label: '🧋今天喝什么', style: 1 }, action: { type: 2, permission: { type: 2 }, data: '/今天喝什么' } },
               ],
             },
             {
@@ -97,7 +63,11 @@ export function apply(ctx: Context, config: Config) {
     }
 
     const bot = session.bot as any
-    send_md_mess(session, payload)
+    if (session.isDirect) {
+      await bot.internal.sendPrivateMessage(channelId, payload)
+    } else {
+      await bot.internal.sendMessage(channelId, payload)
+    }
   }
 
   ctx.command('eat', '今天吃什么')
@@ -109,9 +79,8 @@ export function apply(ctx: Context, config: Config) {
       if (!foods.length) return '食物列表为空，请检查数据文件'
       const choice = foods[Math.floor(Math.random() * foods.length)]
       let msg = `## 今天吃什么呢？\n爱丽丝推荐老师吃：\n✨**${choice}**✨`
-
       if (config.text?.length) msg += '\n' + config.text.map(t => `**${t}**`).join('\n')
-      await sendMarkdown(session, msg,'换一个','今天喝什么')
+      await sendMarkdown(session, msg)
     })
 
   ctx.command('drink', '今天喝什么')
@@ -124,6 +93,6 @@ export function apply(ctx: Context, config: Config) {
       const choice = drinks[Math.floor(Math.random() * drinks.length)]
       let msg = `## 今天喝什么呢？\n爱丽丝推荐老师喝：\n✨**${choice}**✨`
       if (config.text?.length) msg += '\n' + config.text.map(t => `**${t}**`).join('\n')
-      await sendMarkdown(session, msg,'今天吃什么','换一个')
+      await sendMarkdown(session, msg)
     })
 }
